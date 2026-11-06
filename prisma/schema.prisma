@@ -1,0 +1,261 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ───────────── Authentification ─────────────
+enum Role {
+  ADMIN
+  RH
+  MANAGER
+  EMPLOYE
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  role         Role     @default(EMPLOYE)
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+// ───────────── Types ENUM ─────────────
+enum SexeType {
+  M
+  F
+
+  @@map("sexe_type")
+}
+
+enum StatutEmploye {
+  ACTIF          @map("Actif")
+  EN_CONGE       @map("En congé")
+  LICENCIE       @map("Licencié")
+  DEMISSIONNAIRE @map("Démissionnaire")
+
+  @@map("statut_employe")
+}
+
+enum TypeContrat {
+  CDI
+  CDD
+  STAGE      @map("Stage")
+  PRESTATAIRE @map("Prestataire")
+
+  @@map("type_contrat_enum")
+}
+
+enum TypeConge {
+  CONGE_PAYE @map("Congé payé")
+  MALADIE    @map("Maladie")
+  MATERNITE  @map("Maternité")
+  SANS_SOLDE @map("Sans solde")
+
+  @@map("type_conge_enum")
+}
+
+enum StatutConge {
+  EN_ATTENTE @map("En attente")
+  APPROUVE   @map("Approuvé")
+  REFUSE     @map("Refusé")
+
+  @@map("statut_conge_enum")
+}
+
+enum StatutAnnee {
+  OUVERT @map("Ouvert")
+  FERME  @map("Fermé")
+
+  @@map("statut_annee_enum")
+}
+
+// ───────────── Tables ─────────────
+model Annee {
+  id        Int         @id @default(autoincrement())
+  annee     Int         @unique
+  statut    StatutAnnee @default(OUVERT)
+  createdAt DateTime    @default(now()) @map("created_at") @db.Timestamp(6)
+  paies     Paie[]
+
+  @@map("annee")
+}
+
+model Departement {
+  id          Int      @id @default(autoincrement())
+  nom         String   @unique @db.VarChar(100)
+  description String?
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamp(6)
+  postes      Poste[]
+
+  @@map("departement")
+}
+
+model Poste {
+  id             Int          @id @default(autoincrement())
+  intitule       String       @db.VarChar(100)
+  salaireBaseMin Decimal      @map("salaire_base_min") @db.Decimal(10, 2)
+  salaireBaseMax Decimal      @map("salaire_base_max") @db.Decimal(10, 2)
+  departementId  Int?         @map("departement_id")
+  departement    Departement? @relation(fields: [departementId], references: [id], onDelete: SetNull)
+  employes       Employe[]
+
+  @@map("poste")
+}
+
+model Employe {
+  id            Int           @id @default(autoincrement())
+  matricule     String        @unique @db.VarChar(20)
+  nom           String        @db.VarChar(50)
+  prenom        String        @db.VarChar(50)
+  dateNaissance DateTime      @map("date_naissance") @db.Date
+  sexe          SexeType
+  email         String        @unique @db.VarChar(100)
+  telephone     String?       @db.VarChar(20)
+  adresse       String?
+  photo         String?       @db.VarChar(255)
+  dateEmbauche  DateTime      @map("date_embauche") @db.Date
+  statut        StatutEmploye @default(ACTIF)
+  posteId       Int?          @map("poste_id")
+  poste         Poste?        @relation(fields: [posteId], references: [id], onDelete: SetNull)
+  createdAt     DateTime      @default(now()) @map("created_at") @db.Timestamp(6)
+
+  contrats     Contrat[]
+  conges       Conge[]
+  paies        Paie[]
+  annonces     Annonce[]     @relation("AnnoncesAuteur")
+  reclamations Reclamation[]
+  sanctions    Sanction[]
+
+  @@map("employe")
+}
+
+model Contrat {
+  id            Int         @id @default(autoincrement())
+  typeContrat   TypeContrat @map("type_contrat")
+  dateDebut     DateTime    @map("date_debut") @db.Date
+  dateFin       DateTime?   @map("date_fin") @db.Date
+  salaireActuel Decimal     @map("salaire_actuel") @db.Decimal(10, 2)
+  employeId     Int         @map("employe_id")
+  employe       Employe     @relation(fields: [employeId], references: [id], onDelete: Cascade)
+
+  @@map("contrat")
+}
+
+model Conge {
+  id        Int         @id @default(autoincrement())
+  typeConge TypeConge   @map("type_conge")
+  dateDebut DateTime    @map("date_debut") @db.Date
+  dateFin   DateTime    @map("date_fin") @db.Date
+  statut    StatutConge @default(EN_ATTENTE)
+  motif     String?
+  employeId Int         @map("employe_id")
+  employe   Employe     @relation(fields: [employeId], references: [id], onDelete: Cascade)
+
+  @@map("conge")
+}
+
+model Paie {
+  id            Int      @id @default(autoincrement())
+  mois          Int
+  anneeId       Int      @map("annee_id")
+  annee         Annee    @relation(fields: [anneeId], references: [id], onDelete: Restrict)
+  salaireNet    Decimal  @map("salaire_net") @db.Decimal(10, 2)
+  primes        Decimal? @default(0.00) @db.Decimal(10, 2)
+  deductions    Decimal? @default(0.00) @db.Decimal(10, 2)
+  datePaiement  DateTime @map("date_paiement") @db.Date
+  employeId     Int      @map("employe_id")
+  employe       Employe  @relation(fields: [employeId], references: [id], onDelete: Cascade)
+
+  @@map("paie")
+}
+
+enum StatutAnnonce {
+  BROUILLON  @map("Brouillon")
+  PUBLIE     @map("Publié")
+  ARCHIVE    @map("Archivé")
+
+  @@map("statut_annonce_enum")
+}
+
+enum StatutReclamation {
+  OUVERTE     @map("Ouverte")
+  EN_COURS    @map("En cours")
+  RESOLUE     @map("Résolue")
+  FERMEE      @map("Fermée")
+
+  @@map("statut_reclamation_enum")
+}
+
+enum PrioriteReclamation {
+  BASSE   @map("Basse")
+  MOYENNE @map("Moyenne")
+  HAUTE   @map("Haute")
+
+  @@map("priorite_reclamation_enum")
+}
+
+model Annonce {
+  id          Int           @id @default(autoincrement())
+  titre       String        @db.VarChar(200)
+  contenu     String
+  statut      StatutAnnonce @default(BROUILLON)
+  dateDebut   DateTime?     @map("date_debut") @db.Date
+  dateFin     DateTime?     @map("date_fin") @db.Date
+  auteurId    Int?          @map("auteur_id")
+  auteur      Employe?      @relation("AnnoncesAuteur", fields: [auteurId], references: [id], onDelete: SetNull)
+  createdAt   DateTime      @default(now()) @map("created_at") @db.Timestamp(6)
+
+  @@map("annonce")
+}
+
+model Reclamation {
+  id          Int                 @id @default(autoincrement())
+  sujet       String              @db.VarChar(200)
+  description String
+  statut      StatutReclamation   @default(OUVERTE)
+  priorite    PrioriteReclamation @default(MOYENNE)
+  employeId   Int                 @map("employe_id")
+  employe     Employe             @relation(fields: [employeId], references: [id], onDelete: Cascade)
+  createdAt   DateTime            @default(now()) @map("created_at") @db.Timestamp(6)
+  resolvedAt  DateTime?           @map("resolved_at") @db.Timestamp(6)
+
+  @@map("reclamation")
+}
+
+// ───────────── Sanctions / Avertissements ─────────────
+enum TypeSanction {
+  AVERTISSEMENT_ORAL  @map("Avertissement oral")
+  AVERTISSEMENT_ECRIT @map("Avertissement écrit")
+  BLAME               @map("Blâme")
+  MISE_A_PIED         @map("Mise à pied")
+  RETENUE_SALAIRE     @map("Retenue sur salaire")
+
+  @@map("type_sanction_enum")
+}
+
+enum StatutSanction {
+  ACTIF  @map("Actif")
+  LEVE   @map("Levé")
+
+  @@map("statut_sanction_enum")
+}
+
+model Sanction {
+  id          Int           @id @default(autoincrement())
+  type        TypeSanction
+  date        DateTime      @db.Date
+  motif       String        @db.VarChar(300)
+  description String?
+  statut      StatutSanction @default(ACTIF)
+  employeId   Int           @map("employe_id")
+  employe     Employe       @relation(fields: [employeId], references: [id], onDelete: Cascade)
+  createdAt   DateTime      @default(now()) @map("created_at") @db.Timestamp(6)
+
+  @@map("sanction")
+}
