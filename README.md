@@ -15,10 +15,4 @@ admin@entreprise.mg / Admin@12345
 directeur@entreprise.mg / Directeur@2026
 comptable@entreprise.mg / Comptable@2026
 
-## Dingana manaraka
-- Pejy /login (signIn server action), layout dashboard + sidebar araka ny rôle
-- Formulaire création/modification mpiasa (useActionState)
-- Pejy /conges, /contrats, /departements
-- Rapport (effectif, absences), export CSV/PDF
-- Tests (Vitest + Playwright), rate-limit login, Docker compose
-"# gestion_perso" 
+

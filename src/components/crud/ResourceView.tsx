@@ -8,39 +8,43 @@ import { SearchInput } from "@/components/ui/SearchInput";
 import { Button } from "@/components/ui/Button";
 import { IconButton } from "@/components/ui/IconButton";
 import { Modal } from "@/components/ui/Modal";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { ResourceForm } from "./ResourceForm";
 import { Avatar } from "@/components/ui/Avatar";
 import { AppIcon } from "@/components/ui/AppIcon";
 import { display } from "./format";
-import {
-  generateEmployePdf,
-  generateContratPdf,
-  generateCongePdf,
-  generateSanctionPdf,
-} from "@/lib/pdf";
+import { SanctionsSummary } from "./SanctionsSummary";
+import { SetPasswordForm } from "./SetPasswordForm";
 import type { ClientResource, Relations, Row } from "./types";
 
 type ModalState = { mode: "create" | "edit" | "view"; row?: Row } | null;
 
 export function ResourceView({
-  res, rows, total, relations, canWrite, canDelete,
+  res, rows, total, relations, canWrite, canDelete, q,
 }: {
   res: ClientResource; rows: Row[]; total: number; relations: Relations;
-  canWrite: boolean; canDelete: boolean;
+  canWrite: boolean; canDelete: boolean; q?: string;
 }) {
   const [modal, setModal] = useState<ModalState>(null);
   const [pending, startTransition] = useTransition();
+  const [toDelete, setToDelete] = useState<Row | null>(null);
+  const [deleteError, setDeleteError] = useState<string>();
   const close = () => setModal(null);
   const columns = res.fields.filter((f) => f.list);
   const imageField = res.fields.find((f) => f.type === "image");
 
-  function remove(row: Row) {
-    const warn = res.deleteWarning ? `\n\n${res.deleteWarning}` : "";
-    if (!confirm(`Supprimer ce(tte) ${res.singular.toLowerCase()} #${row.id} ?${warn}`)) return;
+  function confirmRemove() {
+    if (!toDelete) return;
     startTransition(async () => {
-      const r = await deleteRecord(res.key, row.id);
-      if (!r.ok) alert(r.message ?? "La suppression a échoué.");
+      const r = await deleteRecord(res.key, toDelete.id);
+      if (r.ok) setToDelete(null);
+      else setDeleteError(r.message ?? "La suppression a échoué.");
     });
+  }
+
+  function askRemove(row: Row) {
+    setDeleteError(undefined);
+    setToDelete(row);
   }
 
   return (
@@ -65,7 +69,6 @@ export function ResourceView({
           <table className="w-full text-left text-sm">
             <thead>
               <tr className="border-b border-slate-100 bg-slate-50/80">
-                <th className="px-5 py-3.5 text-xs font-semibold uppercase tracking-wider text-slate-500">#</th>
                 {columns.map((f) => (
                   <th key={f.name} className="px-5 py-3.5 text-xs font-semibold uppercase tracking-wider text-slate-500">
                     <span className="inline-flex items-center gap-1.5">
@@ -82,7 +85,7 @@ export function ResourceView({
             <tbody className="divide-y divide-slate-100">
               {rows.length === 0 && (
                 <tr>
-                  <td colSpan={columns.length + 2} className="px-5 py-16 text-center">
+                  <td colSpan={columns.length + 1} className="px-5 py-16 text-center">
                     <div className="mx-auto flex max-w-xs flex-col items-center gap-2">
                       <div className="grid h-12 w-12 place-items-center rounded-full bg-slate-100 text-slate-400">
                         <AppIcon name={res.icon} size={22} />
@@ -97,7 +100,6 @@ export function ResourceView({
               )}
               {rows.map((row) => (
                 <tr key={row.id} className="group transition-colors hover:bg-indigo-50/30">
-                  <td className="px-5 py-3.5 tabular-nums text-slate-400">{row.id}</td>
                   {columns.map((f) => (
                     <td key={f.name} className="max-w-xs truncate px-5 py-3.5 text-slate-700">
                       {display(f, row[f.name], relations, row)}
@@ -108,27 +110,13 @@ export function ResourceView({
                       <IconButton tone="view" label="Voir" onClick={() => setModal({ mode: "view", row })}>
                         <Eye size={17} />
                       </IconButton>
-                      {["employes", "contrats", "conges", "sanctions"].includes(res.key) && (
-                        <IconButton
-                          tone="view"
-                          label="PDF"
-                          onClick={() => {
-                            if (res.key === "employes") generateEmployePdf(row, relations);
-                            else if (res.key === "contrats") generateContratPdf(row, relations);
-                            else if (res.key === "conges") generateCongePdf(row, relations);
-                            else if (res.key === "sanctions") generateSanctionPdf(row, relations);
-                          }}
-                        >
-                          <FileDown size={17} />
-                        </IconButton>
-                      )}
                       {canWrite && (
                         <IconButton tone="edit" label="Modifier" onClick={() => setModal({ mode: "edit", row })}>
                           <Pencil size={17} />
                         </IconButton>
                       )}
                       {canDelete && (
-                        <IconButton tone="delete" label="Supprimer" disabled={pending} onClick={() => remove(row)}>
+                        <IconButton tone="delete" label="Supprimer" disabled={pending} onClick={() => askRemove(row)}>
                           <Trash2 size={17} />
                         </IconButton>
                       )}
@@ -140,6 +128,18 @@ export function ResourceView({
           </table>
         </div>
       </div>
+
+      {toDelete && (
+        <ConfirmDialog
+          title="Confirmer la suppression"
+          message={<>Supprimer définitivement ce(tte) {res.singular.toLowerCase()} <strong>#{toDelete.id}</strong> ?</>}
+          warning={res.deleteWarning}
+          error={deleteError}
+          pending={pending}
+          onConfirm={confirmRemove}
+          onCancel={() => setToDelete(null)}
+        />
+      )}
 
       {modal?.mode === "view" && modal.row && (
         <Modal title={`${res.singular} #${modal.row.id}`} onClose={close}>
@@ -177,17 +177,25 @@ export function ResourceView({
                 </div>
               ))}
           </dl>
+          {res.key === "employes" && <SanctionsSummary sanctions={modal.row.sanctions ?? []} />}
+          {res.key === "employes" && canWrite && (
+            <div className="mt-6 border-t border-slate-100 pt-5">
+              <SetPasswordForm employeId={modal.row.id} email={modal.row.email} />
+            </div>
+          )}
           <div className="mt-8 flex flex-wrap justify-end gap-2.5 border-t border-slate-100 pt-5">
-            {["employes", "contrats", "conges", "sanctions"].includes(res.key) && (
+            {["employes", "contrats", "conges", "sanctions", "paies"].includes(res.key) && (
               <Button
                 variant="secondary"
                 className="gap-1.5"
-                onClick={() => {
+                onClick={async () => {
                   const row = modal.row!;
-                  if (res.key === "employes") generateEmployePdf(row, relations);
-                  else if (res.key === "contrats") generateContratPdf(row, relations);
-                  else if (res.key === "conges") generateCongePdf(row, relations);
-                  else if (res.key === "sanctions") generateSanctionPdf(row, relations);
+                  const pdf = await import("@/lib/pdf"); // chargé uniquement au clic (jspdf est lourd)
+                  if (res.key === "employes") pdf.generateEmployePdf(row, relations);
+                  else if (res.key === "contrats") pdf.generateContratPdf(row, relations);
+                  else if (res.key === "conges") pdf.generateCongePdf(row, relations);
+                  else if (res.key === "sanctions") pdf.generateSanctionPdf(row, relations);
+                  else if (res.key === "paies") pdf.generatePaiePdf(row, relations);
                 }}
               >
                 <FileDown size={15} /> PDF

@@ -1,5 +1,5 @@
 import {
-  Activity, AlertTriangle, AlignLeft, Banknote, Briefcase, Building2, Cake, CalendarCheck, CalendarDays,
+  Activity, AlertTriangle, BarChart3, CalendarClock, Settings, AlignLeft, Banknote, Briefcase, Building2, Cake, CalendarCheck, CalendarDays,
   CalendarPlus, CalendarRange, FileText, Gift, Hash, IdCard, Image as ImageIcon, LayoutDashboard, Layers, Mail,
   MapPin, Megaphone, MessageSquare, MinusCircle, Palmtree, Phone, User, Users, VenusAndMars, Wallet,
   type LucideIcon,
@@ -36,6 +36,9 @@ export const ICONS: Record<IconName, LucideIcon> = {
   megaphone: Megaphone,
   alert: AlertTriangle,
   layoutDashboard: LayoutDashboard,
+  chart: BarChart3,
+  balance: CalendarClock,
+  settings: Settings,
 };
 
 export function AppIcon({ name, size = 16, className }: { name?: IconName; size?: number; className?: string }) {

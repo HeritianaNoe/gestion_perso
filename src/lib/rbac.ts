@@ -6,8 +6,12 @@ const MATRIX: Record<Role, Permission[]> = {
   ADMIN: ["data:read", "data:write", "data:delete"],
   RH: ["data:read", "data:write"],
   MANAGER: ["data:read"],
-  EMPLOYE: [],
+  // Employé : consultation uniquement (tableau de bord, listes…)
+  EMPLOYE: ["data:read"],
 };
 
 export const can = (role: Role | undefined, perm: Permission) =>
   !!role && MATRIX[role].includes(perm);
+
+
+export const canDeleteResource = (role: Role | undefined, _key: string) => can(role, "data:delete");

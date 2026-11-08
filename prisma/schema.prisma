@@ -105,6 +105,7 @@ model Poste {
   departement    Departement? @relation(fields: [departementId], references: [id], onDelete: SetNull)
   employes       Employe[]
 
+  @@index([departementId])
   @@map("poste")
 }
 
@@ -128,10 +129,9 @@ model Employe {
   contrats     Contrat[]
   conges       Conge[]
   paies        Paie[]
-  annonces     Annonce[]     @relation("AnnoncesAuteur")
-  reclamations Reclamation[]
   sanctions    Sanction[]
 
+  @@index([posteId])
   @@map("employe")
 }
 
@@ -144,6 +144,7 @@ model Contrat {
   employeId     Int         @map("employe_id")
   employe       Employe     @relation(fields: [employeId], references: [id], onDelete: Cascade)
 
+  @@index([employeId])
   @@map("contrat")
 }
 
@@ -157,6 +158,7 @@ model Conge {
   employeId Int         @map("employe_id")
   employe   Employe     @relation(fields: [employeId], references: [id], onDelete: Cascade)
 
+  @@index([employeId])
   @@map("conge")
 }
 
@@ -172,60 +174,9 @@ model Paie {
   employeId     Int      @map("employe_id")
   employe       Employe  @relation(fields: [employeId], references: [id], onDelete: Cascade)
 
+  @@index([employeId])
+  @@index([anneeId])
   @@map("paie")
-}
-
-enum StatutAnnonce {
-  BROUILLON  @map("Brouillon")
-  PUBLIE     @map("Publié")
-  ARCHIVE    @map("Archivé")
-
-  @@map("statut_annonce_enum")
-}
-
-enum StatutReclamation {
-  OUVERTE     @map("Ouverte")
-  EN_COURS    @map("En cours")
-  RESOLUE     @map("Résolue")
-  FERMEE      @map("Fermée")
-
-  @@map("statut_reclamation_enum")
-}
-
-enum PrioriteReclamation {
-  BASSE   @map("Basse")
-  MOYENNE @map("Moyenne")
-  HAUTE   @map("Haute")
-
-  @@map("priorite_reclamation_enum")
-}
-
-model Annonce {
-  id          Int           @id @default(autoincrement())
-  titre       String        @db.VarChar(200)
-  contenu     String
-  statut      StatutAnnonce @default(BROUILLON)
-  dateDebut   DateTime?     @map("date_debut") @db.Date
-  dateFin     DateTime?     @map("date_fin") @db.Date
-  auteurId    Int?          @map("auteur_id")
-  auteur      Employe?      @relation("AnnoncesAuteur", fields: [auteurId], references: [id], onDelete: SetNull)
-  createdAt   DateTime      @default(now()) @map("created_at") @db.Timestamp(6)
-
-  @@map("annonce")
-}
-
-model Reclamation {
-  id          Int                 @id @default(autoincrement())
-  sujet       String              @db.VarChar(200)
-  description String
-  statut      StatutReclamation   @default(OUVERTE)
-  priorite    PrioriteReclamation @default(MOYENNE)
-  employeId   Int                 @map("employe_id")
-  employe     Employe             @relation(fields: [employeId], references: [id], onDelete: Cascade)
-  createdAt   DateTime            @default(now()) @map("created_at") @db.Timestamp(6)
-  resolvedAt  DateTime?           @map("resolved_at") @db.Timestamp(6)
-
-  @@map("reclamation")
 }
 
 // ───────────── Sanctions / Avertissements ─────────────
@@ -257,5 +208,14 @@ model Sanction {
   employe     Employe       @relation(fields: [employeId], references: [id], onDelete: Cascade)
   createdAt   DateTime      @default(now()) @map("created_at") @db.Timestamp(6)
 
+  @@index([employeId])
   @@map("sanction")
+}
+
+/// Paramètres modifiables de l'application (clé / valeur), ex. taux de la prime d'ancienneté
+model Parametre {
+  cle    String @id @db.VarChar(50)
+  valeur String
+
+  @@map("parametre")
 }

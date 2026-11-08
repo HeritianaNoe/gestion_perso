@@ -2,11 +2,11 @@ import type { FieldDef, IconName, Opt } from "@/components/crud/types";
 
 export type ResourceKey =
   | "annees" | "departements" | "postes" | "employes" | "contrats" | "conges" | "paies"
-  | "annonces" | "reclamations" | "sanctions";
+  | "sanctions";
 
 export type Resource = {
   key: ResourceKey;
-  model: "annee" | "departement" | "poste" | "employe" | "contrat" | "conge" | "paie" | "annonce" | "reclamation" | "sanction";
+  model: "annee" | "departement" | "poste" | "employe" | "contrat" | "conge" | "paie" | "sanction";
   singular: string;
   plural: string;
   icon: IconName;
@@ -51,22 +51,6 @@ const STATUT_CONGE: Opt[] = [
 const STATUT_ANNEE: Opt[] = [
   { value: "OUVERT", label: "Ouvert" },
   { value: "FERME", label: "Fermé" },
-];
-const STATUT_ANNONCE: Opt[] = [
-  { value: "BROUILLON", label: "Brouillon" },
-  { value: "PUBLIE", label: "Publié" },
-  { value: "ARCHIVE", label: "Archivé" },
-];
-const STATUT_RECLAMATION: Opt[] = [
-  { value: "OUVERTE", label: "Ouverte" },
-  { value: "EN_COURS", label: "En cours" },
-  { value: "RESOLUE", label: "Résolue" },
-  { value: "FERMEE", label: "Fermée" },
-];
-const PRIORITE_RECLAMATION: Opt[] = [
-  { value: "BASSE", label: "Basse" },
-  { value: "MOYENNE", label: "Moyenne" },
-  { value: "HAUTE", label: "Haute" },
 ];
 const TYPE_SANCTION: Opt[] = [
   { value: "AVERTISSEMENT_ORAL", label: "Avertissement oral" },
@@ -145,6 +129,8 @@ export const RESOURCES: Record<ResourceKey, Resource> = {
     search: ["matricule", "nom", "prenom", "email"],
     orderBy: [{ nom: "asc" }, { prenom: "asc" }],
     optionLabel: employeLabel,
+    // Sanctions chargées pour le marquage dans le détail de l'employé
+    include: { poste: true, sanctions: { orderBy: { date: "desc" } } },
     deleteWarning: "Les contrats, congés, paies et sanctions de cet employé seront également supprimés.",
   },
 
@@ -197,38 +183,7 @@ export const RESOURCES: Record<ResourceKey, Resource> = {
     search: SEARCH_EMPLOYE,
     orderBy: { datePaiement: "desc" },
     optionLabel: (r) => `Paie #${r.id}`,
-    include: INCLUDE_EMPLOYE,
-  },
-
-  annonces: {
-    key: "annonces", model: "annonce", singular: "Annonce", plural: "Annonces", icon: "megaphone",
-    fields: [
-      { name: "titre", icon: "text", label: "Titre", type: "text", required: true, list: true, maxLength: 200 },
-      { name: "contenu", icon: "message", label: "Contenu", type: "textarea", required: true },
-      { name: "statut", icon: "activity", label: "Statut", type: "enum", required: true, list: true, options: STATUT_ANNONCE, defaultValue: "BROUILLON" },
-      { name: "auteurId", icon: "user", label: "Auteur", type: "relation", relation: "employes", list: true },
-      { name: "dateDebut", icon: "calendarPlus", label: "Date début", type: "date", list: true },
-      { name: "dateFin", icon: "calendarCheck", label: "Date fin", type: "date", list: true },
-    ],
-    search: ["titre", "contenu"],
-    orderBy: { createdAt: "desc" },
-    optionLabel: (r) => r.titre,
-    include: { auteur: true },
-  },
-
-  reclamations: {
-    key: "reclamations", model: "reclamation", singular: "Réclamation", plural: "Réclamations", icon: "alert",
-    fields: [
-      { name: "sujet", icon: "text", label: "Sujet", type: "text", required: true, list: true, maxLength: 200 },
-      { name: "description", icon: "message", label: "Description", type: "textarea", required: true },
-      { name: "employeId", icon: "user", label: "Employé", type: "relation", relation: "employes", required: true, list: true },
-      { name: "priorite", icon: "activity", label: "Priorité", type: "enum", required: true, list: true, options: PRIORITE_RECLAMATION, defaultValue: "MOYENNE" },
-      { name: "statut", icon: "activity", label: "Statut", type: "enum", required: true, list: true, options: STATUT_RECLAMATION, defaultValue: "OUVERTE" },
-    ],
-    search: ["sujet", "description", "employe.nom", "employe.prenom"],
-    orderBy: { createdAt: "desc" },
-    optionLabel: (r) => r.sujet,
-    include: INCLUDE_EMPLOYE,
+    include: { employe: true, annee: true },
   },
 
   sanctions: {
@@ -262,5 +217,4 @@ export const NAV_GROUPS: NavGroup[] = [
   { label: "Contrats & Paie", keys: ["contrats", "paies", "annees"] },
   { label: "Absences", keys: ["conges"] },
   { label: "Discipline", keys: ["sanctions"] },
-  { label: "Communication", keys: ["annonces", "reclamations"] },
 ];

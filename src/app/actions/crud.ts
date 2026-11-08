@@ -3,10 +3,13 @@
 import { revalidatePath } from "next/cache";
 import { Prisma } from "@prisma/client";
 import { auth } from "@/auth";
-import { can, type Permission } from "@/lib/rbac";
+import { can, canDeleteResource, type Permission } from "@/lib/rbac";
 import { getResource } from "@/lib/resources";
-import { delegate, parseForm } from "@/lib/crud";
+import { delegate, listAll, parseForm } from "@/lib/crud";
 import { removeImage, saveImage } from "@/lib/uploads";
+
+// Ressources dont la modification change les notifications (employé sans contrat / sans paie)
+const AFFECTS_ALERTS = new Set(["employes", "contrats", "paies"]);
 
 export type ActionState =
   | { ok: boolean; errors?: Record<string, string>; message?: string }
@@ -87,13 +90,16 @@ export async function saveRecord(
   }
   await Promise.all(obsolete.map(removeImage));
   revalidatePath(`/${r.key}`);
+  if (AFFECTS_ALERTS.has(r.key)) revalidatePath("/", "layout"); // met à jour la cloche de notifications
   return { ok: true };
 }
 
 export async function deleteRecord(key: string, id: number): Promise<NonNullable<ActionState>> {
   const r = getResource(key);
   if (!r) return { ok: false, message: "Table inconnue." };
-  if (!(await allowed("data:delete"))) return { ok: false, message: "Accès non autorisé." };
+  const session = await auth();
+  if (!session?.user || !canDeleteResource(session.user.role, r.key))
+    return { ok: false, message: "Accès non autorisé : seul l'administrateur peut supprimer." };
 
   const imageFields = r.fields.filter((f) => f.type === "image");
   const old = imageFields.length ? await delegate(r).findUnique({ where: { id } }) : null;
@@ -105,5 +111,17 @@ export async function deleteRecord(key: string, id: number): Promise<NonNullable
   }
   if (old) await Promise.all(imageFields.map((f) => removeImage(old[f.name])));
   revalidatePath(`/${r.key}`);
+  if (AFFECTS_ALERTS.has(r.key)) revalidatePath("/", "layout"); // met à jour la cloche de notifications
   return { ok: true };
+}
+
+/** Liste complète (hors pagination) pour l'export PDF d'un tableau. */
+export async function exportRecords(
+  key: string,
+  q?: string,
+): Promise<{ ok: true; items: any[] } | { ok: false; message: string }> {
+  const r = getResource(key);
+  if (!r) return { ok: false, message: "Table inconnue." };
+  if (!(await allowed("data:read"))) return { ok: false, message: "Accès non autorisé." };
+  return { ok: true, items: await listAll(r, q) };
 }

@@ -29,7 +29,6 @@ export function ResourceForm({
     <form action={action} className="grid grid-cols-1 gap-5 md:grid-cols-2">
       {res.fields.map((f) => {
         const common = {
-          key: f.name,
           label: f.label + (f.required ? " *" : ""),
           name: f.name,
           icon: f.icon,
@@ -48,6 +47,7 @@ export function ResourceForm({
           const options = f.type === "enum" ? f.options ?? [] : relations[f.relation!] ?? [];
           return (
             <Select
+              key={f.name}
               {...common}
               options={options}
               placeholder={f.required ? "— Sélectionner —" : "— Aucun —"}
@@ -58,6 +58,7 @@ export function ResourceForm({
           f.type === "int" || f.type === "decimal" ? "number" : f.type === "date" ? "date" : f.type;
         return (
           <Input
+            key={f.name}
             {...common}
             type={htmlType}
             min={f.min ?? (f.type === "decimal" ? 0 : undefined)}

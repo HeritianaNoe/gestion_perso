@@ -3,7 +3,7 @@ import { can } from "@/lib/rbac";
 import { prisma } from "@/lib/prisma";
 import { PageHeader } from "@/components/ui/PageHeader";
 import {
-  Users, Briefcase, FileText, Palmtree, Wallet, Building2, Megaphone, AlertTriangle,
+  Users, Briefcase, FileText, Palmtree, Wallet, Building2, AlertTriangle,
   TrendingUp, UserCheck, Clock, CheckCircle2,
 } from "lucide-react";
 import Link from "next/link";
@@ -21,40 +21,34 @@ export default async function DashboardPage() {
   }
 
   const [
-    employesTotal,
-    employesActifs,
-    employesConge,
     postesCount,
     departementsCount,
     contratsCount,
-    congesEnAttente,
-    congesApprouves,
     paiesCount,
-    annoncesPubliees,
-    reclamationsOuvertes,
-    reclamationsHaute,
     sanctionsActives,
     employesByStatut,
     contratsByType,
     congesByType,
+    congesByStatut,
   ] = await Promise.all([
-    prisma.employe.count(),
-    prisma.employe.count({ where: { statut: "ACTIF" } }),
-    prisma.employe.count({ where: { statut: "EN_CONGE" } }),
     prisma.poste.count(),
     prisma.departement.count(),
     prisma.contrat.count(),
-    prisma.conge.count({ where: { statut: "EN_ATTENTE" } }),
-    prisma.conge.count({ where: { statut: "APPROUVE" } }),
     prisma.paie.count(),
-    prisma.annonce.count({ where: { statut: "PUBLIE" } }),
-    prisma.reclamation.count({ where: { statut: { in: ["OUVERTE", "EN_COURS"] } } }),
-    prisma.reclamation.count({ where: { priorite: "HAUTE", statut: { in: ["OUVERTE", "EN_COURS"] } } }),
     prisma.sanction.count({ where: { statut: "ACTIF" } }),
     prisma.employe.groupBy({ by: ["statut"], _count: true }),
     prisma.contrat.groupBy({ by: ["typeContrat"], _count: true }),
     prisma.conge.groupBy({ by: ["typeConge"], _count: true }),
+    prisma.conge.groupBy({ by: ["statut"], _count: true }),
   ]);
+
+  const nbStatut = (rows: { statut: string; _count: number }[], k: string) =>
+    rows.find((r) => r.statut === k)?._count ?? 0;
+  const employesTotal = employesByStatut.reduce((t, r) => t + r._count, 0);
+  const employesActifs = nbStatut(employesByStatut, "ACTIF");
+  const employesConge = nbStatut(employesByStatut, "EN_CONGE");
+  const congesEnAttente = nbStatut(congesByStatut, "EN_ATTENTE");
+  const congesApprouves = nbStatut(congesByStatut, "APPROUVE");
 
   const kpis = [
     {
@@ -101,24 +95,6 @@ export default async function DashboardPage() {
       href: "/paies",
       color: "bg-emerald-50 text-emerald-600",
       ring: "ring-emerald-100",
-    },
-    {
-      label: "Annonces publiées",
-      value: annoncesPubliees,
-      sub: "Visible par le personnel",
-      icon: Megaphone,
-      href: "/annonces",
-      color: "bg-rose-50 text-rose-600",
-      ring: "ring-rose-100",
-    },
-    {
-      label: "Réclamations ouvertes",
-      value: reclamationsOuvertes,
-      sub: reclamationsHaute > 0 ? `${reclamationsHaute} prioritaires` : "Aucune haute priorité",
-      icon: AlertTriangle,
-      href: "/reclamations",
-      color: "bg-orange-50 text-orange-600",
-      ring: "ring-orange-100",
     },
     {
       label: "Sanctions actives",
@@ -290,8 +266,6 @@ export default async function DashboardPage() {
             { href: "/employes", label: "Employés", icon: Users },
             { href: "/conges", label: "Congés", icon: Palmtree },
             { href: "/paies", label: "Paies", icon: Wallet },
-            { href: "/annonces", label: "Annonces", icon: Megaphone },
-            { href: "/reclamations", label: "Réclamations", icon: AlertTriangle },
             { href: "/departements", label: "Départements", icon: Building2 },
           ].map((a) => (
             <Link

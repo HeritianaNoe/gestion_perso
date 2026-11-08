@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LogOut, Mail, ShieldCheck, Users } from "lucide-react";
+import { Mail, ShieldCheck, Users } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { AppIcon } from "@/components/ui/AppIcon";
 import type { IconName } from "@/components/crud/types";
@@ -11,12 +11,13 @@ export type NavItem = { href: string; label: string; icon: IconName };
 export type NavGroup = { label: string; items: NavItem[] };
 
 export function Sidebar({
-  groups, email, role, signOutAction,
+  groups,
+  email,
+  role,
 }: {
   groups: NavGroup[];
   email?: string;
   role?: string;
-  signOutAction: () => Promise<void>;
 }) {
   const pathname = usePathname();
 
@@ -74,26 +75,28 @@ export function Sidebar({
         ))}
       </nav>
 
+      {/* User info — mijanona eo amin'ny sidebar */}
       <div className="border-t border-slate-100 bg-slate-50/50 px-4 py-4">
-        <div className="mb-3 space-y-1.5">
-          <p className="flex items-center gap-2 truncate text-xs text-slate-500">
-            <Mail size={13} className="shrink-0 text-slate-400" aria-hidden="true" />
-            <span className="truncate">{email}</span>
-          </p>
-          <p className="flex items-center gap-2 text-xs text-slate-500">
-            <ShieldCheck size={13} className="shrink-0 text-slate-400" aria-hidden="true" />
-            <span className="font-medium capitalize text-slate-600">{role}</span>
-          </p>
-        </div>
-        <form action={signOutAction}>
-          <button
-            type="submit"
-            className="flex w-full items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-600 shadow-sm transition hover:border-red-200 hover:bg-red-50 hover:text-red-600"
+        <div className="flex items-center gap-3">
+          <div
+            className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-indigo-100 text-indigo-700 ring-2 ring-indigo-50"
+            title={email}
           >
-            <LogOut size={14} />
-            Se déconnecter
-          </button>
-        </form>
+            <span className="text-sm font-semibold leading-none">
+              {email ? email.charAt(0).toUpperCase() : "?"}
+            </span>
+          </div>
+          <div className="min-w-0 space-y-0.5">
+            <p className="flex items-center gap-1.5 truncate text-xs text-slate-500">
+              <Mail size={12} className="shrink-0 text-slate-400" aria-hidden="true" />
+              <span className="truncate">{email}</span>
+            </p>
+            <p className="flex items-center gap-1.5 text-xs text-slate-500">
+              <ShieldCheck size={12} className="shrink-0 text-slate-400" aria-hidden="true" />
+              <span className="font-medium capitalize text-slate-600">{role}</span>
+            </p>
+          </div>
+        </div>
       </div>
     </aside>
   );

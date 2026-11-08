@@ -55,7 +55,6 @@ export function display(f: FieldDef, v: unknown, relations: Relations, row?: Row
     case "relation": {
       const related =
         (f.name === "employeId" && row?.employe) ||
-        (f.name === "auteurId" && row?.auteur) ||
         null;
       if (related && (related.nom || related.prenom)) {
         return (

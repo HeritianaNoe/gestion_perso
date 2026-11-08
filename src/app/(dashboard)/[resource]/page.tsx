@@ -1,10 +1,12 @@
 import { notFound } from "next/navigation";
 import { auth } from "@/auth";
-import { can } from "@/lib/rbac";
+import { can, canDeleteResource } from "@/lib/rbac";
 import { getResource } from "@/lib/resources";
 import { getRelationOptions, listRecords } from "@/lib/crud";
 import { Pagination } from "@/components/ui/Pagination";
 import { ResourceView } from "@/components/crud/ResourceView";
+import { PaiesExportButtons } from "@/components/crud/PaiesExportButtons";
+import { ListExportButtons } from "@/components/crud/ListExportButtons";
 
 export default async function ResourcePage({
   params, searchParams,
@@ -33,6 +35,13 @@ export default async function ResourcePage({
     getRelationOptions(r),
   ]);
 
+  const actions =
+    r.key === "paies" ? (
+      <PaiesExportButtons q={q} total={total} />
+    ) : r.key === "employes" || r.key === "sanctions" ? (
+      <ListExportButtons resource={r.key} q={q} total={total} />
+    ) : undefined;
+
   return (
     <>
       <ResourceView
@@ -41,9 +50,10 @@ export default async function ResourcePage({
         total={total}
         relations={relations}
         canWrite={can(role, "data:write")}
-        canDelete={can(role, "data:delete")}
+        canDelete={canDeleteResource(role, r.key)}
+        q={q}
       />
-      <Pagination page={current} pages={pages} basePath={`/${r.key}`} q={q} />
+      <Pagination page={current} pages={pages} basePath={`/${r.key}`} q={q} actions={actions} />
     </>
   );
 }

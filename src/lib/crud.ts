@@ -44,6 +44,17 @@ export async function listRecords(r: Resource, p: { q?: string; page?: number; s
   };
 }
 
+/** Tous les enregistrements correspondant à la recherche (pour les exports PDF). */
+export async function listAll(r: Resource, q?: string, max = 5000) {
+  const items = await delegate(r).findMany({
+    where: buildWhere(r, q),
+    orderBy: r.orderBy,
+    take: max,
+    ...(r.include ? { include: r.include } : {}),
+  });
+  return JSON.parse(JSON.stringify(items)) as any[];
+}
+
 export async function getRelationOptions(r: Resource): Promise<Relations> {
   const out: Relations = {};
   for (const f of r.fields) {

@@ -25,7 +25,8 @@ export type IconName =
   | "calendar" | "building" | "briefcase" | "users" | "file" | "palm" | "wallet"
   | "user" | "idcard" | "mail" | "phone" | "cake" | "gender" | "pin" | "calendarPlus"
   | "calendarCheck" | "calendarRange" | "activity" | "text" | "banknote" | "gift"
-  | "minus" | "message" | "image" | "hash" | "layers" | "megaphone" | "alert" | "layoutDashboard";
+  | "minus" | "message" | "image" | "hash" | "layers" | "megaphone" | "alert" | "layoutDashboard"
+  | "chart" | "balance" | "settings";
 
 export type ClientResource = {
   key: string;
