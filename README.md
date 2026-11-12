@@ -11,8 +11,8 @@ npm run dev                   # http://localhost:3000
 ```
 
 Login: 
-admin@entreprise.mg / Admin@12345  
-directeur@entreprise.mg / Directeur@2026
-comptable@entreprise.mg / Comptable@2026
+admin@entreprise.mg / password123  
+directeur@entreprise.mg / password123
+comptable@entreprise.mg / password123
 
 

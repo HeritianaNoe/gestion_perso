@@ -55,7 +55,7 @@ async function main() {
 
 
   // Utilisateur administrateur
-  const passwordHash = await bcrypt.hash("Admin@12345", 12);
+  const passwordHash = await bcrypt.hash("password123", 12);
   await prisma.user.upsert({
     where: { email: "admin@entreprise.mg" },
     update: {},
@@ -63,7 +63,7 @@ async function main() {
   });
 
   // Compte Directeur (MANAGER)
-  const dirHash = await bcrypt.hash("Directeur@2026", 12);
+  const dirHash = await bcrypt.hash("password123", 12);
   await prisma.user.upsert({
     where: { email: "directeur@entreprise.mg" },
     update: {},
@@ -71,7 +71,7 @@ async function main() {
   });
 
   // Compte Comptable (RH pour accès paie / lecture-écriture limitée)
-  const comptHash = await bcrypt.hash("Comptable@2026", 12);
+  const comptHash = await bcrypt.hash("password123", 12);
   await prisma.user.upsert({
     where: { email: "comptable@entreprise.mg" },
     update: {},
