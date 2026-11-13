@@ -66,8 +66,8 @@ async function main() {
   const dirHash = await bcrypt.hash("password123", 12);
   await prisma.user.upsert({
     where: { email: "directeur@entreprise.mg" },
-    update: {},
-    create: { email: "directeur@entreprise.mg", passwordHash: dirHash, role: "MANAGER" },
+    update: { role: "DIRECTOR", passwordHash: dirHash },
+    create: { email: "directeur@entreprise.mg", passwordHash: dirHash, role: "DIRECTOR" },
   });
 
   // Compte Comptable (RH pour accès paie / lecture-écriture limitée)

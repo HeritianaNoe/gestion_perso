@@ -43,3 +43,54 @@ body {
   outline: 2px solid #6366f1;
   outline-offset: 2px;
 }
+
+
+/* ───────── Thèmes (Paramètres) ─────────
+   Redéfinit la palette indigo utilisée dans l'UI. */
+:root[data-theme="gray"] {
+  --primary: #374151;
+  --primary-hover: #1f2937;
+  --primary-soft: #f3f4f6;
+  --color-indigo-50: #f9fafb;
+  --color-indigo-100: #f3f4f6;
+  --color-indigo-200: #e5e7eb;
+  --color-indigo-300: #d1d5db;
+  --color-indigo-400: #9ca3af;
+  --color-indigo-500: #6b7280;
+  --color-indigo-600: #4b5563;
+  --color-indigo-700: #374151;
+  --color-indigo-800: #1f2937;
+  --color-indigo-900: #111827;
+}
+
+:root[data-theme="red"] {
+  --primary: #b91c1c;
+  --primary-hover: #991b1b;
+  --primary-soft: #fef2f2;
+  --color-indigo-50: #fef2f2;
+  --color-indigo-100: #fee2e2;
+  --color-indigo-200: #fecaca;
+  --color-indigo-300: #fca5a5;
+  --color-indigo-400: #f87171;
+  --color-indigo-500: #ef4444;
+  --color-indigo-600: #dc2626;
+  --color-indigo-700: #b91c1c;
+  --color-indigo-800: #991b1b;
+  --color-indigo-900: #7f1d1d;
+}
+
+:root[data-theme="green"] {
+  --primary: #047857;
+  --primary-hover: #065f46;
+  --primary-soft: #ecfdf5;
+  --color-indigo-50: #ecfdf5;
+  --color-indigo-100: #d1fae5;
+  --color-indigo-200: #a7f3d0;
+  --color-indigo-300: #6ee7b7;
+  --color-indigo-400: #34d399;
+  --color-indigo-500: #10b981;
+  --color-indigo-600: #059669;
+  --color-indigo-700: #047857;
+  --color-indigo-800: #065f46;
+  --color-indigo-900: #064e3b;
+}

@@ -10,6 +10,7 @@ datasource db {
 // ───────────── Authentification ─────────────
 enum Role {
   ADMIN
+  DIRECTOR
   RH
   MANAGER
   EMPLOYE

@@ -1,15 +1,39 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect, useRef } from "react";
 import { AlertCircle, Loader2, Lock, LogIn, Mail, Users } from "lucide-react";
 import { login } from "./actions";
 
 export default function LoginPage() {
   const [error, formAction, pending] = useActionState(login, undefined);
+  const formRef = useRef<HTMLFormElement>(null);
+  const emailRef = useRef<HTMLInputElement>(null);
+  const passwordRef = useRef<HTMLInputElement>(null);
+
+  function clearForm() {
+    formRef.current?.reset();
+    if (emailRef.current) emailRef.current.value = "";
+    if (passwordRef.current) passwordRef.current.value = "";
+  }
+
+  useEffect(() => {
+    clearForm();
+    const onPageShow = (e: PageTransitionEvent) => {
+      if (e.persisted) clearForm();
+    };
+    window.addEventListener("pageshow", onPageShow);
+    return () => {
+      window.removeEventListener("pageshow", onPageShow);
+      clearForm();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (error && passwordRef.current) passwordRef.current.value = "";
+  }, [error]);
 
   return (
     <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-slate-50 p-4">
-      {/* Soft decorative background */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         <div className="absolute -left-32 -top-32 h-96 w-96 rounded-full bg-indigo-100/60 blur-3xl" />
         <div className="absolute -bottom-40 -right-32 h-[28rem] w-[28rem] rounded-full bg-violet-100/50 blur-3xl" />
@@ -17,7 +41,9 @@ export default function LoginPage() {
       </div>
 
       <form
+        ref={formRef}
         action={formAction}
+        autoComplete="off"
         className="relative w-full max-w-[400px] space-y-6 rounded-2xl border border-slate-200/80 bg-white p-8 shadow-xl shadow-slate-200/50"
       >
         <div className="flex flex-col items-center gap-3 text-center">
@@ -38,11 +64,13 @@ export default function LoginPage() {
               aria-hidden="true"
             />
             <input
+              ref={emailRef}
               name="email"
               type="email"
               required
               placeholder="Adresse email"
-              autoComplete="email"
+              autoComplete="off"
+              defaultValue=""
               className="w-full rounded-xl border border-slate-200 bg-slate-50/50 py-2.5 pl-10 pr-3.5 text-sm text-slate-900 placeholder:text-slate-400 transition focus:border-indigo-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-indigo-500/10"
             />
           </div>
@@ -53,12 +81,14 @@ export default function LoginPage() {
               aria-hidden="true"
             />
             <input
+              ref={passwordRef}
               name="password"
               type="password"
               required
               minLength={8}
               placeholder="Mot de passe"
-              autoComplete="current-password"
+              autoComplete="new-password"
+              defaultValue=""
               className="w-full rounded-xl border border-slate-200 bg-slate-50/50 py-2.5 pl-10 pr-3.5 text-sm text-slate-900 placeholder:text-slate-400 transition focus:border-indigo-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-indigo-500/10"
             />
           </div>
@@ -88,13 +118,6 @@ export default function LoginPage() {
             </>
           )}
         </button>
-
-        <div className="rounded-xl border border-slate-100 bg-slate-50/80 px-3.5 py-3 text-[11px] leading-relaxed text-slate-500">
-          <p className="mb-1 font-semibold text-slate-600">Comptes de démonstration</p>
-          <p>Admin : admin@entreprise.mg / Admin@12345</p>
-          <p>Directeur : directeur@entreprise.mg / Directeur@2026</p>
-          <p>Comptable : comptable@entreprise.mg / Comptable@2026</p>
-        </div>
       </form>
     </main>
   );

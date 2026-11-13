@@ -1,18 +1,8 @@
-# Gestion du Personnel — Next.js 15 + Prisma + PostgreSQL + NextAuth v5
+# Gestion du Personnel 
 
-## Fametrahana
-```bash
-unzip gestion-personnel.zip && cd gestion-personnel
-cp .env.example .env          # ovay ny DATABASE_URL ; AUTH_SECRET = `npx auth secret`
-npm install
-npx prisma migrate dev --name init
-npm run db:seed
-npm run dev                   # http://localhost:3000
-```
+Application de gestion d'établissement scolaire avec Next.js, React, TypeScript, Prisma et PostgreSQL.
 
-Login: 
-admin@entreprise.mg / password123  
+Login:
+admin@entreprise.mg / password123
 directeur@entreprise.mg / password123
 comptable@entreprise.mg / password123
-
-
